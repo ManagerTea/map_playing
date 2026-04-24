@@ -2,11 +2,18 @@ const state = {
   mapSrc: "",
   mapScale: 100,
   stageZoom: 1,
+  mapOffsetX: 0,
+  mapOffsetY: 0,
   tokens: [],
   updatedAt: 0,
 };
 
 const els = {
+  body: document.body,
+  introBar: document.getElementById("introBar"),
+  mapPanel: document.getElementById("mapPanel"),
+  tokenPanel: document.getElementById("tokenPanel"),
+  toggleUiBtn: document.getElementById("toggleUiBtn"),
   mapImage: document.getElementById("mapImage"),
   mapWrapper: document.getElementById("mapWrapper"),
   zoomLayer: document.getElementById("zoomLayer"),
@@ -54,9 +61,12 @@ function applyIncomingState(remote, force = false) {
   if (!force && Number(remote.updatedAt || 0) <= state.updatedAt) {
     return;
   }
+
   state.mapSrc = remote.mapSrc || "";
   state.mapScale = Number(remote.mapScale) || 100;
   state.stageZoom = Number(remote.stageZoom) || 1;
+  state.mapOffsetX = Number(remote.mapOffsetX) || 0;
+  state.mapOffsetY = Number(remote.mapOffsetY) || 0;
   state.tokens = Array.isArray(remote.tokens) ? remote.tokens : [];
   state.updatedAt = Number(remote.updatedAt || 0);
   renderAll();
@@ -86,10 +96,7 @@ async function uploadImageFile(file) {
 
   const result = await api("/api/upload-image", {
     method: "POST",
-    body: JSON.stringify({
-      filename: file.name,
-      dataUrl,
-    }),
+    body: JSON.stringify({ filename: file.name, dataUrl }),
   });
 
   return result.imageUrl;
@@ -107,7 +114,7 @@ function applyMap() {
   els.mapWrapper.style.width = `${state.mapScale}%`;
   els.zoomInput.value = String(state.mapScale);
 
-  els.zoomLayer.style.transform = `scale(${state.stageZoom})`;
+  els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
 }
 
@@ -144,6 +151,8 @@ function createToken(token) {
     image.style.display = "none";
     dot.style.display = "block";
     dot.style.background = token.color || "#e63946";
+    dot.style.width = `${token.width || 24}px`;
+    dot.style.height = `${token.height || 24}px`;
   }
 
   if (token.name) {
@@ -188,6 +197,7 @@ function enableDrag(node, tokenId) {
     if (!token || token.locked) return;
 
     event.preventDefault();
+    event.stopPropagation();
     dragging = true;
     startX = token.x;
     startY = token.y;
@@ -237,6 +247,7 @@ function enableDrag(node, tokenId) {
   });
 
   function moveGhost(x, y) {
+    if (!ghost) return;
     ghost.style.left = `${x}px`;
     ghost.style.top = `${y}px`;
   }
@@ -255,7 +266,30 @@ function renderTokenList() {
     item.className = "token-item";
 
     const title = document.createElement("div");
-    title.textContent = `${index + 1}. ${token.name || "未命名 Token"} (${Math.round(token.x)}%, ${Math.round(token.y)}%)`;
+    title.textContent = `${index + 1}. ${token.name || "未命名 Token"}`;
+
+    const sizeEdit = document.createElement("div");
+    sizeEdit.className = "size-edit";
+    const widthInput = document.createElement("input");
+    widthInput.type = "number";
+    widthInput.min = "16";
+    widthInput.max = "512";
+    widthInput.value = String(token.width || (token.imageUrl ? 100 : 24));
+    const heightInput = document.createElement("input");
+    heightInput.type = "number";
+    heightInput.min = "16";
+    heightInput.max = "512";
+    heightInput.value = String(token.height || (token.imageUrl ? 100 : 24));
+    const sizeBtn = document.createElement("button");
+    sizeBtn.type = "button";
+    sizeBtn.textContent = "改大小";
+    sizeBtn.addEventListener("click", async () => {
+      token.width = clamp(Number(widthInput.value) || 24, 16, 512);
+      token.height = clamp(Number(heightInput.value) || 24, 16, 512);
+      renderAll();
+      await saveStateToServer();
+    });
+    sizeEdit.append(widthInput, heightInput, sizeBtn);
 
     const actions = document.createElement("div");
     actions.className = "token-actions";
@@ -271,21 +305,11 @@ function renderTokenList() {
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.textContent = "编辑";
+    editBtn.textContent = "改名";
     editBtn.addEventListener("click", async () => {
       const nextName = prompt("输入新名字（可留空）", token.name || "");
       if (nextName === null) return;
       token.name = nextName.trim();
-
-      if (token.imageUrl) {
-        const sizeText = prompt("输入图片尺寸（宽x高），例如 120x100", `${token.width || 100}x${token.height || 100}`);
-        if (sizeText && /^\d+x\d+$/i.test(sizeText.trim())) {
-          const [w, h] = sizeText.toLowerCase().split("x").map((n) => Number(n));
-          token.width = clamp(w, 24, 512);
-          token.height = clamp(h, 24, 512);
-        }
-      }
-
       renderAll();
       await saveStateToServer();
     });
@@ -300,7 +324,7 @@ function renderTokenList() {
     });
 
     actions.append(lockBtn, editBtn, delBtn);
-    item.append(title, actions);
+    item.append(title, sizeEdit, actions);
     els.tokenList.appendChild(item);
   });
 }
@@ -311,7 +335,74 @@ function renderAll() {
   renderTokenList();
 }
 
+function bindMapDrag() {
+  let draggingMap = false;
+  let startX = 0;
+  let startY = 0;
+  let baseX = 0;
+  let baseY = 0;
+
+  els.mapStage.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".token") || event.target.closest(".draggable-panel") || event.target.closest("#toggleUiBtn")) {
+      return;
+    }
+    draggingMap = true;
+    els.mapStage.classList.add("grabbing");
+    startX = event.clientX;
+    startY = event.clientY;
+    baseX = state.mapOffsetX;
+    baseY = state.mapOffsetY;
+  });
+
+  window.addEventListener("pointermove", (event) => {
+    if (!draggingMap) return;
+    state.mapOffsetX = baseX + (event.clientX - startX);
+    state.mapOffsetY = baseY + (event.clientY - startY);
+    applyMap();
+  });
+
+  window.addEventListener("pointerup", async () => {
+    if (!draggingMap) return;
+    draggingMap = false;
+    els.mapStage.classList.remove("grabbing");
+    await saveStateToServer();
+  });
+}
+
+function makePanelDraggable(panel) {
+  const handle = panel.querySelector(".drag-handle");
+  if (!handle) return;
+
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  handle.addEventListener("pointerdown", (event) => {
+    dragging = true;
+    const rect = panel.getBoundingClientRect();
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    panel.style.left = `${event.clientX - offsetX}px`;
+    panel.style.top = `${event.clientY - offsetY}px`;
+    panel.style.right = "auto";
+  });
+
+  handle.addEventListener("pointerup", () => {
+    dragging = false;
+  });
+}
+
 function attachEvents() {
+  els.toggleUiBtn.addEventListener("click", () => {
+    els.body.classList.toggle("ui-hidden");
+    els.toggleUiBtn.textContent = els.body.classList.contains("ui-hidden") ? "恢复UI" : "一键隐藏UI";
+  });
+
   els.mapUpload.addEventListener("change", async (event) => {
     const [file] = event.target.files || [];
     if (!file) return;
@@ -352,8 +443,8 @@ function attachEvents() {
         name: els.tokenName.value.trim(),
         color: els.tokenColor.value,
         imageUrl,
-        width: 100,
-        height: 100,
+        width: imageUrl ? 100 : 24,
+        height: imageUrl ? 100 : 24,
         x: 50,
         y: 50,
         locked: false,
@@ -369,6 +460,10 @@ function attachEvents() {
       els.addTokenBtn.textContent = "新增 Token";
     }
   });
+
+  bindMapDrag();
+  makePanelDraggable(els.mapPanel);
+  makePanelDraggable(els.tokenPanel);
 }
 
 async function start() {

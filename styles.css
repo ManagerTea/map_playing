@@ -7,55 +7,48 @@
   --muted: #9eb2c5;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
   background: var(--bg);
   color: var(--text);
+  overflow: hidden;
 }
 
 .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--line);
   background: #0c0f12;
+  z-index: 60;
 }
 
-.topbar h1 {
-  margin: 0;
-  font-size: 1.1rem;
-}
+.topbar h1 { margin: 0; font-size: 1.1rem; }
+.topbar p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.9rem; }
 
-.topbar p {
-  margin: 0.3rem 0 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-main {
-  position: relative;
-  min-height: calc(100vh - 72px);
-}
+main { position: relative; height: 100vh; }
 
 .map-stage {
-  width: 100%;
-  height: calc(100vh - 72px);
-  overflow: auto;
-  padding: 1rem;
+  position: absolute;
+  inset: 72px 0 0 0;
+  overflow: hidden;
+  cursor: grab;
 }
+
+.map-stage.grabbing { cursor: grabbing; }
 
 .zoom-layer {
   transform-origin: top left;
   width: fit-content;
+  will-change: transform;
 }
 
-.map-wrapper {
-  position: relative;
-  width: fit-content;
-}
+.map-wrapper { position: relative; width: fit-content; }
 
 #mapImage {
   display: none;
@@ -65,10 +58,7 @@ main {
   pointer-events: none;
 }
 
-.token-layer {
-  position: absolute;
-  inset: 0;
-}
+.token-layer { position: absolute; inset: 0; }
 
 .token {
   position: absolute;
@@ -80,10 +70,7 @@ main {
   gap: 4px;
 }
 
-.token.locked {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
+.token.locked { cursor: not-allowed; opacity: 0.72; }
 
 .token-image {
   display: none;
@@ -111,50 +98,32 @@ main {
   white-space: nowrap;
 }
 
-.controls-fixed {
+.draggable-panel {
   position: fixed;
-  right: 12px;
-  top: 86px;
   width: min(360px, calc(100vw - 24px));
-  display: grid;
-  gap: 0.6rem;
-  z-index: 30;
-}
-
-.panel {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 0.75rem;
   backdrop-filter: blur(4px);
+  z-index: 70;
 }
 
-.panel h2 {
-  margin: 0 0 0.55rem;
-  font-size: 1rem;
+#mapPanel { top: 86px; right: 12px; }
+#tokenPanel { top: 360px; right: 12px; }
+
+.panel-header {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #384858;
+  font-weight: 600;
+  cursor: move;
 }
 
-.hint {
-  margin: 0.5rem 0 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
+.panel-body { padding: 0.75rem; }
+.hint { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.84rem; }
+.mt6 { margin-top: 6px; }
+.row { display: flex; align-items: center; gap: 0.35rem; }
 
-.mt6 {
-  margin-top: 6px;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-button,
-input,
-summary {
-  font: inherit;
-}
+button, input { font: inherit; }
 
 button {
   background: #2b3948;
@@ -164,8 +133,7 @@ button {
   padding: 0.35rem 0.55rem;
 }
 
-input[type="number"],
-input[type="text"] {
+input[type="number"], input[type="text"] {
   width: 100%;
   background: #131a21;
   color: var(--text);
@@ -174,17 +142,8 @@ input[type="text"] {
   padding: 0.35rem 0.45rem;
 }
 
-.file-upload {
-  display: grid;
-  gap: 0.25rem;
-  margin-bottom: 0.4rem;
-}
-
-.token-form {
-  display: grid;
-  gap: 0.35rem;
-  margin-top: 0.6rem;
-}
+.file-upload { display: grid; gap: 0.25rem; margin-bottom: 0.4rem; }
+.token-form { display: grid; gap: 0.35rem; margin-top: 0.2rem; }
 
 .token-list {
   list-style: none;
@@ -192,7 +151,7 @@ input[type="text"] {
   padding: 0;
   display: grid;
   gap: 0.5rem;
-  max-height: 38vh;
+  max-height: 32vh;
   overflow: auto;
 }
 
@@ -204,10 +163,12 @@ input[type="text"] {
   gap: 0.35rem;
 }
 
-.token-actions {
-  display: flex;
+.token-actions { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+
+.size-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
   gap: 0.3rem;
-  flex-wrap: wrap;
 }
 
 .drag-ghost {
@@ -219,4 +180,23 @@ input[type="text"] {
   border: 2px dashed #fff;
   transform: translate(-50%, -50%);
   z-index: 99;
+}
+
+.toggle-ui-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 90;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+}
+
+body.ui-hidden #introBar,
+body.ui-hidden #mapPanel,
+body.ui-hidden #tokenPanel {
+  display: none;
+}
+
+body.ui-hidden .map-stage {
+  inset: 0;
 }

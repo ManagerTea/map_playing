@@ -18,6 +18,8 @@ const defaultState = {
   mapSrc: '',
   mapScale: 100,
   stageZoom: 1,
+  mapOffsetX: 0,
+  mapOffsetY: 0,
   tokens: [],
   updatedAt: Date.now(),
 };
@@ -42,6 +44,8 @@ function saveState(next) {
     mapSrc: typeof next.mapSrc === 'string' ? next.mapSrc : '',
     mapScale: Number.isFinite(next.mapScale) ? next.mapScale : 100,
     stageZoom: Number.isFinite(next.stageZoom) ? next.stageZoom : 1,
+    mapOffsetX: Number.isFinite(next.mapOffsetX) ? next.mapOffsetX : 0,
+    mapOffsetY: Number.isFinite(next.mapOffsetY) ? next.mapOffsetY : 0,
     tokens: Array.isArray(next.tokens) ? next.tokens : [],
     updatedAt: Date.now(),
   };

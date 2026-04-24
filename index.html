@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
+    <header class="topbar" id="introBar">
       <h1>跑团地图助手（服务器共享）</h1>
       <p>同一服务器上的所有访问者共享同一份地图与 Token 状态</p>
     </header>
@@ -22,9 +22,9 @@
         </div>
       </section>
 
-      <aside class="controls-fixed" aria-label="地图与Token控制">
-        <div class="panel">
-          <h2>地图</h2>
+      <section id="mapPanel" class="draggable-panel" aria-label="地图控制">
+        <div class="panel-header drag-handle">地图栏（可拖动）</div>
+        <div class="panel-body">
           <label class="file-upload">
             上传背景地图（共享）
             <input id="mapUpload" type="file" accept="image/*" />
@@ -39,11 +39,13 @@
             <strong>滚轮缩放界面：</strong>
             <span id="stageZoomText">100%</span>
           </div>
-          <p class="hint">地图固定显示，不可拖动；在地图区域滚轮可缩放整个地图界面。</p>
+          <p class="hint">地图与整体视图均可拖动，不会卡在屏幕外。</p>
         </div>
+      </section>
 
-        <details open class="panel">
-          <summary>Token 列表与管理</summary>
+      <section id="tokenPanel" class="draggable-panel" aria-label="Token 控制">
+        <div class="panel-header drag-handle">Token栏（可拖动）</div>
+        <div class="panel-body">
           <form id="tokenForm" class="token-form">
             <label>
               名字（可空）
@@ -60,8 +62,10 @@
             <button id="addTokenBtn" type="submit">新增 Token</button>
           </form>
           <ul id="tokenList" class="token-list"></ul>
-        </details>
-      </aside>
+        </div>
+      </section>
+
+      <button id="toggleUiBtn" class="toggle-ui-btn" type="button">一键隐藏UI</button>
     </main>
 
     <template id="tokenTemplate">
