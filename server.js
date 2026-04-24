@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
+const os = require('os');
 
 const HOST = '0.0.0.0';
 const PORT = Number(process.env.PORT || 4444);
@@ -175,6 +176,25 @@ const server = http.createServer(async (req, res) => {
   res.end('Not Found');
 });
 
+function getNetworkAddresses() {
+  const interfaces = os.networkInterfaces();
+  const urls = [];
+  Object.values(interfaces).forEach((items) => {
+    (items || []).forEach((item) => {
+      if (item.family === 'IPv4' && !item.internal) {
+        urls.push(`http://${item.address}:${PORT}`);
+      }
+    });
+  });
+  return urls;
+}
+
 server.listen(PORT, HOST, () => {
-  console.log(`Map helper server running at http://${HOST}:${PORT}`);
+  console.log(`Map helper server is listening on ${HOST}:${PORT}`);
+  console.log(`Open in this machine: http://localhost:${PORT}`);
+  const networkUrls = getNetworkAddresses();
+  if (networkUrls.length > 0) {
+    console.log('Open from other devices in LAN:');
+    networkUrls.forEach((url) => console.log(`- ${url}`));
+  }
 });
