@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>跑团地图助手</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>跑团地图助手</h1>
+      <p>纯前端、低开销：地图 + Token 拖放与管理</p>
+    </header>
+
+    <main>
+      <section class="map-stage" id="mapStage" aria-label="地图区域">
+        <div class="map-wrapper" id="mapWrapper">
+          <img id="mapImage" alt="地图背景" />
+          <div id="tokenLayer" class="token-layer" aria-label="Token 图层"></div>
+        </div>
+      </section>
+
+      <aside class="controls-fixed" aria-label="地图与Token控制">
+        <div class="panel">
+          <h2>地图</h2>
+          <label class="file-upload">
+            上传背景地图
+            <input id="mapUpload" type="file" accept="image/*" />
+          </label>
+          <div class="row">
+            <button id="zoomOut" type="button">-</button>
+            <input id="zoomInput" type="number" min="20" max="300" step="5" value="100" />
+            <span>%</span>
+            <button id="zoomIn" type="button">+</button>
+          </div>
+          <p class="hint">地图固定显示，不可拖动。</p>
+        </div>
+
+        <details open class="panel">
+          <summary>Token 列表与管理</summary>
+          <form id="tokenForm" class="token-form">
+            <label>
+              名字（可空）
+              <input id="tokenName" type="text" maxlength="20" placeholder="例如：骑士A" />
+            </label>
+            <label>
+              颜色
+              <input id="tokenColor" type="color" value="#e63946" />
+            </label>
+            <button type="submit">新增 Token</button>
+          </form>
+          <ul id="tokenList" class="token-list"></ul>
+        </details>
+      </aside>
+    </main>
+
+    <template id="tokenTemplate">
+      <div class="token" role="button" tabindex="0">
+        <span class="token-dot"></span>
+        <span class="token-label"></span>
+      </div>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

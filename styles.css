@@ -1,0 +1,203 @@
+:root {
+  color-scheme: dark;
+  --bg: #111417;
+  --card: rgba(27, 33, 39, 0.95);
+  --line: #33414f;
+  --text: #e6eef6;
+  --muted: #9eb2c5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: #0c0f12;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.topbar p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+main {
+  position: relative;
+  min-height: calc(100vh - 72px);
+}
+
+.map-stage {
+  width: 100%;
+  height: calc(100vh - 72px);
+  overflow: auto;
+  padding: 1rem;
+}
+
+.map-wrapper {
+  position: relative;
+  width: fit-content;
+}
+
+#mapImage {
+  display: none;
+  width: 100%;
+  max-width: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.token-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.token {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.token.locked {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.token-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.token-label {
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+}
+
+.controls-fixed {
+  position: fixed;
+  right: 12px;
+  top: 86px;
+  width: min(340px, calc(100vw - 24px));
+  display: grid;
+  gap: 0.6rem;
+  z-index: 30;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  backdrop-filter: blur(4px);
+}
+
+.panel h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+button,
+input,
+summary {
+  font: inherit;
+}
+
+button {
+  background: #2b3948;
+  color: var(--text);
+  border: 1px solid #425669;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+}
+
+input[type="number"],
+input[type="text"] {
+  width: 100%;
+  background: #131a21;
+  color: var(--text);
+  border: 1px solid #3c4f61;
+  border-radius: 8px;
+  padding: 0.35rem 0.45rem;
+}
+
+.file-upload {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.token-form {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+}
+
+.token-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  max-height: 38vh;
+  overflow: auto;
+}
+
+.token-item {
+  border: 1px solid #3a4957;
+  border-radius: 8px;
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.token-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px dashed #fff;
+  transform: translate(-50%, -50%);
+  z-index: 99;
+}

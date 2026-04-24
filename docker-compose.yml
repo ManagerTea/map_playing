@@ -1,0 +1,6 @@
+services:
+  map-helper:
+    build: .
+    ports:
+      - "4444:80"
+    restart: unless-stopped
