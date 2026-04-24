@@ -390,11 +390,47 @@ function makePanelDraggable(panel) {
     panel.style.left = `${event.clientX - offsetX}px`;
     panel.style.top = `${event.clientY - offsetY}px`;
     panel.style.right = "auto";
+    clampPanelIntoViewport(panel);
   });
 
   handle.addEventListener("pointerup", () => {
     dragging = false;
+    clampPanelIntoViewport(panel);
   });
+
+  handle.addEventListener("pointercancel", () => {
+    dragging = false;
+    clampPanelIntoViewport(panel);
+  });
+}
+
+
+function clampPanelIntoViewport(panel) {
+  const rect = panel.getBoundingClientRect();
+  const maxLeft = window.innerWidth - rect.width - 8;
+  const maxTop = window.innerHeight - rect.height - 8;
+  const left = clamp(rect.left, 8, Math.max(8, maxLeft));
+  const top = clamp(rect.top, 8, Math.max(8, maxTop));
+  panel.style.left = `${left}px`;
+  panel.style.top = `${top}px`;
+  panel.style.right = "auto";
+}
+
+function initPanels() {
+  const panelWidth = Math.min(360, window.innerWidth - 24);
+  els.mapPanel.style.width = `${panelWidth}px`;
+  els.tokenPanel.style.width = `${panelWidth}px`;
+
+  els.mapPanel.style.left = `${window.innerWidth - panelWidth - 12}px`;
+  els.mapPanel.style.top = `86px`;
+  els.mapPanel.style.right = "auto";
+
+  els.tokenPanel.style.left = `${window.innerWidth - panelWidth - 12}px`;
+  els.tokenPanel.style.top = `360px`;
+  els.tokenPanel.style.right = "auto";
+
+  clampPanelIntoViewport(els.mapPanel);
+  clampPanelIntoViewport(els.tokenPanel);
 }
 
 function attachEvents() {
@@ -464,6 +500,12 @@ function attachEvents() {
   bindMapDrag();
   makePanelDraggable(els.mapPanel);
   makePanelDraggable(els.tokenPanel);
+  initPanels();
+
+  window.addEventListener("resize", () => {
+    clampPanelIntoViewport(els.mapPanel);
+    clampPanelIntoViewport(els.tokenPanel);
+  });
 }
 
 async function start() {

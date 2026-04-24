@@ -100,10 +100,14 @@ main { position: relative; height: 100vh; }
 
 .draggable-panel {
   position: fixed;
-  width: min(360px, calc(100vw - 24px));
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  left: auto;
+  right: 12px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(4px);
   z-index: 70;
 }
