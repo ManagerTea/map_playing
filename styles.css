@@ -47,6 +47,11 @@ main {
   padding: 1rem;
 }
 
+.zoom-layer {
+  transform-origin: top left;
+  width: fit-content;
+}
+
 .map-wrapper {
   position: relative;
   width: fit-content;
@@ -80,6 +85,16 @@ main {
   opacity: 0.72;
 }
 
+.token-image {
+  display: none;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 .token-dot {
   width: 24px;
   height: 24px;
@@ -100,7 +115,7 @@ main {
   position: fixed;
   right: 12px;
   top: 86px;
-  width: min(340px, calc(100vw - 24px));
+  width: min(360px, calc(100vw - 24px));
   display: grid;
   gap: 0.6rem;
   z-index: 30;
@@ -123,6 +138,10 @@ main {
   margin: 0.5rem 0 0;
   color: var(--muted);
   font-size: 0.84rem;
+}
+
+.mt6 {
+  margin-top: 6px;
 }
 
 .row {
