@@ -97,8 +97,10 @@ function readBody(req) {
     let data = '';
     req.on('data', (chunk) => {
       data += chunk;
-      if (data.length > 10 * 1024 * 1024) {
-        reject(new Error('Body too large'));
+      if (data.length > 50 * 1024 * 1024) {
+        const err = new Error('Body too large');
+        err.statusCode = 413;
+        reject(err);
         req.destroy();
       }
     });
@@ -147,7 +149,7 @@ const server = http.createServer(async (req, res) => {
       const incoming = JSON.parse(raw || '{}');
       return sendJson(res, 200, saveState(incoming));
     } catch (error) {
-      return sendJson(res, 400, { error: error.message });
+      return sendJson(res, error.statusCode || 400, { error: error.message });
     }
   }
 
@@ -158,7 +160,7 @@ const server = http.createServer(async (req, res) => {
       const imageUrl = saveDataUrlImage(body.dataUrl, body.filename || 'image');
       return sendJson(res, 200, { imageUrl });
     } catch (error) {
-      return sendJson(res, 400, { error: error.message });
+      return sendJson(res, error.statusCode || 400, { error: error.message });
     }
   }
 

@@ -23,8 +23,11 @@
       </section>
 
       <section id="mapPanel" class="draggable-panel" aria-label="地图控制">
-        <div class="panel-header drag-handle">地图栏（可拖动）</div>
-        <div class="panel-body">
+        <div class="panel-header drag-handle">
+          <span>地图栏（可拖动）</span>
+          <button id="toggleMapPanel" type="button" class="header-btn">收起</button>
+        </div>
+        <div class="panel-body" id="mapPanelBody">
           <label class="file-upload">
             上传背景地图（共享）
             <input id="mapUpload" type="file" accept="image/*" />
@@ -51,8 +54,11 @@
       </section>
 
       <section id="tokenPanel" class="draggable-panel" aria-label="Token 控制">
-        <div class="panel-header drag-handle">Token栏（可拖动）</div>
-        <div class="panel-body">
+        <div class="panel-header drag-handle">
+          <span>Token栏（可拖动）</span>
+          <button id="toggleTokenPanel" type="button" class="header-btn">收起</button>
+        </div>
+        <div class="panel-body" id="tokenPanelBody">
           <form id="tokenForm" class="token-form">
             <label>
               名字（可空）
@@ -68,11 +74,19 @@
             </label>
             <button id="addTokenBtn" type="button">新增 Token</button>
           </form>
+
+          <div class="token-toolbar">
+            <button id="deleteSelectedBtn" type="button">删除已选</button>
+            <span id="selectedCount">已选 0 个</span>
+          </div>
           <ul id="tokenList" class="token-list"></ul>
         </div>
       </section>
 
-      <button id="toggleUiBtn" class="toggle-ui-btn" type="button">一键隐藏UI</button>
+      <div class="floating-actions">
+        <button id="lockViewBtn" class="toggle-ui-btn" type="button">锁定地图与位置</button>
+        <button id="toggleUiBtn" class="toggle-ui-btn" type="button">一键隐藏UI</button>
+      </div>
     </main>
 
     <template id="tokenTemplate">

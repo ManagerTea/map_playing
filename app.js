@@ -9,11 +9,22 @@ const state = {
   updatedAt: 0,
 };
 
+const uiState = {
+  viewLocked: false,
+  mapPanelCollapsed: false,
+  tokenPanelCollapsed: false,
+  selectedTokenIds: new Set(),
+};
+
 const els = {
   body: document.body,
-  introBar: document.getElementById("introBar"),
   mapPanel: document.getElementById("mapPanel"),
   tokenPanel: document.getElementById("tokenPanel"),
+  mapPanelBody: document.getElementById("mapPanelBody"),
+  tokenPanelBody: document.getElementById("tokenPanelBody"),
+  toggleMapPanel: document.getElementById("toggleMapPanel"),
+  toggleTokenPanel: document.getElementById("toggleTokenPanel"),
+  lockViewBtn: document.getElementById("lockViewBtn"),
   toggleUiBtn: document.getElementById("toggleUiBtn"),
   mapImage: document.getElementById("mapImage"),
   mapWrapper: document.getElementById("mapWrapper"),
@@ -28,6 +39,8 @@ const els = {
   modeHover: document.getElementById("modeHover"),
   tokenLayer: document.getElementById("tokenLayer"),
   tokenList: document.getElementById("tokenList"),
+  deleteSelectedBtn: document.getElementById("deleteSelectedBtn"),
+  selectedCount: document.getElementById("selectedCount"),
   tokenForm: document.getElementById("tokenForm"),
   tokenName: document.getElementById("tokenName"),
   tokenColor: document.getElementById("tokenColor"),
@@ -43,15 +56,27 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
+function toast(message) {
+  alert(message);
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
+
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "请求失败");
+    let msg = "请求失败";
+    try {
+      const data = await response.json();
+      msg = data.error || msg;
+    } catch {
+      msg = await response.text();
+    }
+    throw new Error(msg || "请求失败");
   }
+
   return response.json();
 }
 
@@ -61,10 +86,7 @@ async function loadStateFromServer() {
 }
 
 function applyIncomingState(remote, force = false) {
-  if (!force && Number(remote.updatedAt || 0) <= state.updatedAt) {
-    return;
-  }
-
+  if (!force && Number(remote.updatedAt || 0) <= state.updatedAt) return;
   state.mapSrc = remote.mapSrc || "";
   state.mapScale = Number(remote.mapScale) || 100;
   state.stageZoom = Number(remote.stageZoom) || 1;
@@ -85,6 +107,8 @@ async function saveStateToServer() {
       body: JSON.stringify(state),
     });
     state.updatedAt = Number(saved.updatedAt || Date.now());
+  } catch (error) {
+    toast(`保存失败：${error.message}`);
   } finally {
     syncing = false;
   }
@@ -106,15 +130,6 @@ async function uploadImageFile(file) {
   return result.imageUrl;
 }
 
-
-function getEffectiveLabelMode() {
-  return state.labelMode === "always" ? "hover" : "always";
-}
-
-function setEffectiveLabelMode(mode) {
-  state.labelMode = mode === "hover" ? "always" : "hover";
-}
-
 function applyMap() {
   if (!state.mapSrc) {
     els.mapImage.style.display = "none";
@@ -126,45 +141,42 @@ function applyMap() {
 
   els.mapWrapper.style.width = `${state.mapScale}%`;
   els.zoomInput.value = String(state.mapScale);
-
   els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
-  const effectiveMode = getEffectiveLabelMode();
-  els.body.classList.toggle("label-hover-mode", effectiveMode === "hover");
-  if (els.modeAlways && els.modeHover) {
-    els.modeAlways.classList.toggle("active", effectiveMode === "always");
-    els.modeHover.classList.toggle("active", effectiveMode === "hover");
-  }
+
+  const hoverMode = state.labelMode === "hover";
+  els.body.classList.toggle("label-hover-mode", hoverMode);
+  els.modeAlways.classList.toggle("active", !hoverMode);
+  els.modeHover.classList.toggle("active", hoverMode);
+
+  els.mapPanelBody.hidden = uiState.mapPanelCollapsed;
+  els.tokenPanelBody.hidden = uiState.tokenPanelCollapsed;
+  els.toggleMapPanel.textContent = uiState.mapPanelCollapsed ? "展开" : "收起";
+  els.toggleTokenPanel.textContent = uiState.tokenPanelCollapsed ? "展开" : "收起";
+  els.lockViewBtn.textContent = uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置";
 }
 
 function setMapScale(next) {
+  if (uiState.viewLocked) return;
   state.mapScale = clamp(Math.round(next), 20, 300);
   renderAll();
   saveStateToServer();
 }
 
-function setStageZoom(next) {
-  state.stageZoom = clamp(next, 0.3, 3);
-  renderAll();
-  saveStateToServer();
-}
-
 function zoomAt(clientX, clientY, deltaY) {
+  if (uiState.viewLocked) return;
   const rect = els.mapStage.getBoundingClientRect();
   const pointerX = clientX - rect.left;
   const pointerY = clientY - rect.top;
-
   const oldScale = state.stageZoom;
   const nextScale = clamp(Number((oldScale + (deltaY > 0 ? -0.1 : 0.1)).toFixed(2)), 0.3, 3);
   if (nextScale === oldScale) return;
 
   const mapX = (pointerX - state.mapOffsetX) / oldScale;
   const mapY = (pointerY - state.mapOffsetY) / oldScale;
-
   state.stageZoom = nextScale;
   state.mapOffsetX = pointerX - mapX * nextScale;
   state.mapOffsetY = pointerY - mapY * nextScale;
-
   renderAll();
   saveStateToServer();
 }
@@ -203,14 +215,10 @@ function createToken(token) {
   if (token.name) {
     label.textContent = token.name;
     label.style.setProperty("--label-scale", String((1 / state.stageZoom).toFixed(4)));
-    if (getEffectiveLabelMode() === "hover") {
+    if (state.labelMode === "hover") {
       label.hidden = true;
-      node.addEventListener("mouseenter", () => {
-        label.hidden = false;
-      });
-      node.addEventListener("mouseleave", () => {
-        label.hidden = true;
-      });
+      node.addEventListener("mouseenter", () => (label.hidden = false));
+      node.addEventListener("mouseleave", () => (label.hidden = true));
     } else {
       label.hidden = false;
     }
@@ -219,10 +227,7 @@ function createToken(token) {
   }
 
   node.classList.toggle("locked", Boolean(token.locked));
-  if (!token.locked) {
-    enableDrag(node, token.id);
-  }
-
+  if (!token.locked) enableDrag(node, token.id);
   els.tokenLayer.appendChild(fragment);
 }
 
@@ -250,24 +255,24 @@ function enableDrag(node, tokenId) {
 
   node.addEventListener("pointerdown", (event) => {
     const token = state.tokens.find((item) => item.id === tokenId);
-    if (!token || token.locked) return;
-
+    if (!token || token.locked || uiState.viewLocked) return;
     event.preventDefault();
     event.stopPropagation();
     dragging = true;
     startX = token.x;
     startY = token.y;
-
     ghost = document.createElement("div");
     ghost.className = "drag-ghost";
     document.body.appendChild(ghost);
-    moveGhost(event.clientX, event.clientY);
+    ghost.style.left = `${event.clientX}px`;
+    ghost.style.top = `${event.clientY}px`;
     node.setPointerCapture(event.pointerId);
   });
 
   node.addEventListener("pointermove", (event) => {
     if (!dragging || !ghost) return;
-    moveGhost(event.clientX, event.clientY);
+    ghost.style.left = `${event.clientX}px`;
+    ghost.style.top = `${event.clientY}px`;
   });
 
   node.addEventListener("pointerup", async (event) => {
@@ -280,7 +285,6 @@ function enableDrag(node, tokenId) {
     const rect = els.tokenLayer.getBoundingClientRect();
     const x = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
     const y = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
-
     token.x = x;
     token.y = y;
     animateToken(node, startX, startY, x, y);
@@ -296,17 +300,9 @@ function enableDrag(node, tokenId) {
 
   node.addEventListener("pointercancel", () => {
     dragging = false;
-    if (ghost) {
-      ghost.remove();
-      ghost = null;
-    }
+    if (ghost) ghost.remove();
+    ghost = null;
   });
-
-  function moveGhost(x, y) {
-    if (!ghost) return;
-    ghost.style.left = `${x}px`;
-    ghost.style.top = `${y}px`;
-  }
 }
 
 function renderTokens() {
@@ -321,8 +317,33 @@ function renderTokenList() {
     const item = document.createElement("li");
     item.className = "token-item";
 
-    const title = document.createElement("div");
-    title.textContent = `${index + 1}. ${token.name || "未命名 Token"}`;
+    const topRow = document.createElement("div");
+    topRow.className = "token-top-row";
+
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = uiState.selectedTokenIds.has(token.id);
+    check.addEventListener("change", () => {
+      if (check.checked) uiState.selectedTokenIds.add(token.id);
+      else uiState.selectedTokenIds.delete(token.id);
+      updateSelectedCount();
+    });
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = token.name || "";
+    nameInput.placeholder = `${index + 1}. 未命名 Token`;
+
+    const saveNameBtn = document.createElement("button");
+    saveNameBtn.type = "button";
+    saveNameBtn.textContent = "保存名";
+    saveNameBtn.addEventListener("click", async () => {
+      token.name = nameInput.value.trim();
+      renderAll();
+      await saveStateToServer();
+    });
+
+    topRow.append(check, nameInput, saveNameBtn);
 
     const sizeEdit = document.createElement("div");
     sizeEdit.className = "size-edit";
@@ -359,30 +380,30 @@ function renderTokenList() {
       await saveStateToServer();
     });
 
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.textContent = "改名";
-    editBtn.addEventListener("click", async () => {
-      const nextName = prompt("输入新名字（可留空）", token.name || "");
-      if (nextName === null) return;
-      token.name = nextName.trim();
-      renderAll();
-      await saveStateToServer();
-    });
-
     const delBtn = document.createElement("button");
     delBtn.type = "button";
     delBtn.textContent = "删除";
     delBtn.addEventListener("click", async () => {
       state.tokens = state.tokens.filter((itemToken) => itemToken.id !== token.id);
+      uiState.selectedTokenIds.delete(token.id);
       renderAll();
       await saveStateToServer();
     });
 
-    actions.append(lockBtn, editBtn, delBtn);
-    item.append(title, sizeEdit, actions);
+    actions.append(lockBtn, delBtn);
+    item.append(topRow, sizeEdit, actions);
     els.tokenList.appendChild(item);
   });
+
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  let valid = 0;
+  state.tokens.forEach((t) => {
+    if (uiState.selectedTokenIds.has(t.id)) valid += 1;
+  });
+  els.selectedCount.textContent = `已选 ${valid} 个`;
 }
 
 function renderAll() {
@@ -399,9 +420,8 @@ function bindMapDrag() {
   let baseY = 0;
 
   els.mapStage.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".token") || event.target.closest(".draggable-panel") || event.target.closest("#toggleUiBtn")) {
-      return;
-    }
+    if (uiState.viewLocked) return;
+    if (event.target.closest(".token") || event.target.closest(".draggable-panel") || event.target.closest(".floating-actions")) return;
     draggingMap = true;
     els.mapStage.classList.add("grabbing");
     startX = event.clientX;
@@ -425,6 +445,26 @@ function bindMapDrag() {
   });
 }
 
+function clampPanelIntoViewport(panel) {
+  const rect = panel.getBoundingClientRect();
+  const maxLeft = window.innerWidth - rect.width - 8;
+  const maxTop = window.innerHeight - rect.height - 8;
+  panel.style.left = `${clamp(rect.left, 8, Math.max(8, maxLeft))}px`;
+  panel.style.top = `${clamp(rect.top, 8, Math.max(8, maxTop))}px`;
+  panel.style.right = "auto";
+}
+
+function initPanels() {
+  const panelWidth = Math.min(360, window.innerWidth - 24);
+  [els.mapPanel, els.tokenPanel].forEach((panel, i) => {
+    panel.style.width = `${panelWidth}px`;
+    panel.style.left = `${window.innerWidth - panelWidth - 12}px`;
+    panel.style.top = `${i === 0 ? 86 : 360}px`;
+    panel.style.right = "auto";
+    clampPanelIntoViewport(panel);
+  });
+}
+
 function makePanelDraggable(panel) {
   const handle = panel.querySelector(".drag-handle");
   if (!handle) return;
@@ -434,6 +474,7 @@ function makePanelDraggable(panel) {
   let offsetY = 0;
 
   handle.addEventListener("pointerdown", (event) => {
+    if (uiState.viewLocked || event.target.closest(".header-btn")) return;
     dragging = true;
     const rect = panel.getBoundingClientRect();
     offsetX = event.clientX - rect.left;
@@ -453,40 +494,6 @@ function makePanelDraggable(panel) {
     dragging = false;
     clampPanelIntoViewport(panel);
   });
-
-  handle.addEventListener("pointercancel", () => {
-    dragging = false;
-    clampPanelIntoViewport(panel);
-  });
-}
-
-
-function clampPanelIntoViewport(panel) {
-  const rect = panel.getBoundingClientRect();
-  const maxLeft = window.innerWidth - rect.width - 8;
-  const maxTop = window.innerHeight - rect.height - 8;
-  const left = clamp(rect.left, 8, Math.max(8, maxLeft));
-  const top = clamp(rect.top, 8, Math.max(8, maxTop));
-  panel.style.left = `${left}px`;
-  panel.style.top = `${top}px`;
-  panel.style.right = "auto";
-}
-
-function initPanels() {
-  const panelWidth = Math.min(360, window.innerWidth - 24);
-  els.mapPanel.style.width = `${panelWidth}px`;
-  els.tokenPanel.style.width = `${panelWidth}px`;
-
-  els.mapPanel.style.left = `${window.innerWidth - panelWidth - 12}px`;
-  els.mapPanel.style.top = `86px`;
-  els.mapPanel.style.right = "auto";
-
-  els.tokenPanel.style.left = `${window.innerWidth - panelWidth - 12}px`;
-  els.tokenPanel.style.top = `360px`;
-  els.tokenPanel.style.right = "auto";
-
-  clampPanelIntoViewport(els.mapPanel);
-  clampPanelIntoViewport(els.tokenPanel);
 }
 
 function attachEvents() {
@@ -495,35 +502,50 @@ function attachEvents() {
     els.toggleUiBtn.textContent = els.body.classList.contains("ui-hidden") ? "恢复UI" : "一键隐藏UI";
   });
 
+  els.lockViewBtn.addEventListener("click", () => {
+    uiState.viewLocked = !uiState.viewLocked;
+    applyMap();
+  });
+
+  els.toggleMapPanel.addEventListener("click", () => {
+    uiState.mapPanelCollapsed = !uiState.mapPanelCollapsed;
+    applyMap();
+  });
+
+  els.toggleTokenPanel.addEventListener("click", () => {
+    uiState.tokenPanelCollapsed = !uiState.tokenPanelCollapsed;
+    applyMap();
+  });
+
   els.mapUpload.addEventListener("change", async (event) => {
     const [file] = event.target.files || [];
     if (!file) return;
-    state.mapSrc = await uploadImageFile(file);
-    renderAll();
-    await saveStateToServer();
-    els.mapUpload.value = "";
+    try {
+      state.mapSrc = await uploadImageFile(file);
+      renderAll();
+      await saveStateToServer();
+    } catch (error) {
+      toast(`地图上传失败：${error.message}`);
+    } finally {
+      els.mapUpload.value = "";
+    }
   });
 
-  els.zoomInput.addEventListener("change", () => {
-    setMapScale(Number(els.zoomInput.value));
-  });
-
+  els.zoomInput.addEventListener("change", () => setMapScale(Number(els.zoomInput.value)));
   els.zoomIn.addEventListener("click", () => setMapScale(state.mapScale + 5));
   els.zoomOut.addEventListener("click", () => setMapScale(state.mapScale - 5));
 
-  if (els.modeAlways && els.modeHover) {
-    els.modeAlways.addEventListener("click", async () => {
-      setEffectiveLabelMode("always");
-      renderAll();
-      await saveStateToServer();
-    });
+  els.modeAlways.addEventListener("click", async () => {
+    state.labelMode = "always";
+    renderAll();
+    await saveStateToServer();
+  });
 
-    els.modeHover.addEventListener("click", async () => {
-      setEffectiveLabelMode("hover");
-      renderAll();
-      await saveStateToServer();
-    });
-  }
+  els.modeHover.addEventListener("click", async () => {
+    state.labelMode = "hover";
+    renderAll();
+    await saveStateToServer();
+  });
 
   els.mapStage.addEventListener(
     "wheel",
@@ -542,7 +564,6 @@ function attachEvents() {
     try {
       const imageFile = (els.tokenImage.files || [])[0];
       const imageUrl = imageFile ? await uploadImageFile(imageFile) : "";
-
       const token = {
         id: crypto.randomUUID(),
         name: els.tokenName.value.trim(),
@@ -554,12 +575,13 @@ function attachEvents() {
         y: 50,
         locked: false,
       };
-
       state.tokens.push(token);
       renderAll();
       await saveStateToServer();
       els.tokenForm.reset();
       els.tokenColor.value = "#e63946";
+    } catch (error) {
+      toast(`新增 Token 失败：${error.message}`);
     } finally {
       els.addTokenBtn.disabled = false;
       els.addTokenBtn.textContent = "新增 Token";
@@ -568,6 +590,15 @@ function attachEvents() {
 
   els.tokenForm.addEventListener("submit", handleAddToken);
   els.addTokenBtn.addEventListener("click", handleAddToken);
+
+  els.deleteSelectedBtn.addEventListener("click", async () => {
+    const ids = Array.from(uiState.selectedTokenIds);
+    if (ids.length === 0) return;
+    state.tokens = state.tokens.filter((token) => !uiState.selectedTokenIds.has(token.id));
+    uiState.selectedTokenIds.clear();
+    renderAll();
+    await saveStateToServer();
+  });
 
   bindMapDrag();
   makePanelDraggable(els.mapPanel);
@@ -583,7 +614,6 @@ function attachEvents() {
 async function start() {
   attachEvents();
   await loadStateFromServer();
-
   setInterval(async () => {
     try {
       const remote = await api("/api/state");
