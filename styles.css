@@ -131,7 +131,7 @@ main { position: relative; height: 100vh; }
 .mt6 { margin-top: 6px; }
 .row { display: flex; align-items: center; gap: 0.35rem; }
 
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 
 button {
   background: #2b3948;
@@ -148,6 +148,14 @@ input[type="number"], input[type="text"] {
   border: 1px solid #3c4f61;
   border-radius: 8px;
   padding: 0.35rem 0.45rem;
+}
+
+select {
+  background: #131a21;
+  color: var(--text);
+  border: 1px solid #3c4f61;
+  border-radius: 8px;
+  padding: 0.28rem 0.45rem;
 }
 
 .file-upload { display: grid; gap: 0.25rem; margin-bottom: 0.4rem; }
@@ -207,4 +215,14 @@ body.ui-hidden #tokenPanel {
 
 body.ui-hidden .map-stage {
   inset: 0;
+}
+
+
+body.label-hover-mode .token-label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.label-hover-mode .token:hover .token-label {
+  opacity: 1;
 }

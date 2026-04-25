@@ -21,6 +21,7 @@ const defaultState = {
   mapOffsetX: 0,
   mapOffsetY: 0,
   tokens: [],
+  labelMode: 'always',
   updatedAt: Date.now(),
 };
 
@@ -47,6 +48,7 @@ function saveState(next) {
     mapOffsetX: Number.isFinite(next.mapOffsetX) ? next.mapOffsetX : 0,
     mapOffsetY: Number.isFinite(next.mapOffsetY) ? next.mapOffsetY : 0,
     tokens: Array.isArray(next.tokens) ? next.tokens : [],
+    labelMode: next.labelMode === 'hover' ? 'hover' : 'always',
     updatedAt: Date.now(),
   };
   fs.writeFileSync(STATE_FILE, JSON.stringify(safe, null, 2));

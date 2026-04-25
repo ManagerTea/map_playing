@@ -5,6 +5,7 @@ const state = {
   mapOffsetX: 0,
   mapOffsetY: 0,
   tokens: [],
+  labelMode: "always",
   updatedAt: 0,
 };
 
@@ -23,6 +24,7 @@ const els = {
   zoomIn: document.getElementById("zoomIn"),
   zoomOut: document.getElementById("zoomOut"),
   stageZoomText: document.getElementById("stageZoomText"),
+  labelMode: document.getElementById("labelMode"),
   tokenLayer: document.getElementById("tokenLayer"),
   tokenList: document.getElementById("tokenList"),
   tokenForm: document.getElementById("tokenForm"),
@@ -68,6 +70,7 @@ function applyIncomingState(remote, force = false) {
   state.mapOffsetX = Number(remote.mapOffsetX) || 0;
   state.mapOffsetY = Number(remote.mapOffsetY) || 0;
   state.tokens = Array.isArray(remote.tokens) ? remote.tokens : [];
+  state.labelMode = remote.labelMode === "hover" ? "hover" : "always";
   state.updatedAt = Number(remote.updatedAt || 0);
   renderAll();
 }
@@ -116,6 +119,8 @@ function applyMap() {
 
   els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
+  els.labelMode.value = state.labelMode;
+  els.body.classList.toggle("label-hover-mode", state.labelMode === "hover");
 }
 
 function setMapScale(next) {
@@ -475,6 +480,12 @@ function attachEvents() {
 
   els.zoomIn.addEventListener("click", () => setMapScale(state.mapScale + 5));
   els.zoomOut.addEventListener("click", () => setMapScale(state.mapScale - 5));
+
+  els.labelMode.addEventListener("change", async () => {
+    state.labelMode = els.labelMode.value === "hover" ? "hover" : "always";
+    renderAll();
+    await saveStateToServer();
+  });
 
   els.mapStage.addEventListener(
     "wheel",
