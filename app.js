@@ -130,6 +130,26 @@ function setStageZoom(next) {
   saveStateToServer();
 }
 
+function zoomAt(clientX, clientY, deltaY) {
+  const rect = els.mapStage.getBoundingClientRect();
+  const pointerX = clientX - rect.left;
+  const pointerY = clientY - rect.top;
+
+  const oldScale = state.stageZoom;
+  const nextScale = clamp(Number((oldScale + (deltaY > 0 ? -0.1 : 0.1)).toFixed(2)), 0.3, 3);
+  if (nextScale === oldScale) return;
+
+  const mapX = (pointerX - state.mapOffsetX) / oldScale;
+  const mapY = (pointerY - state.mapOffsetY) / oldScale;
+
+  state.stageZoom = nextScale;
+  state.mapOffsetX = pointerX - mapX * nextScale;
+  state.mapOffsetY = pointerY - mapY * nextScale;
+
+  renderAll();
+  saveStateToServer();
+}
+
 function createToken(token) {
   const fragment = els.tokenTemplate.content.cloneNode(true);
   const node = fragment.querySelector(".token");
@@ -158,6 +178,7 @@ function createToken(token) {
   if (token.name) {
     label.textContent = token.name;
     label.hidden = false;
+    label.style.setProperty("--label-scale", String((1 / state.stageZoom).toFixed(4)));
   } else {
     label.hidden = true;
   }
@@ -459,8 +480,7 @@ function attachEvents() {
     "wheel",
     (event) => {
       event.preventDefault();
-      const factor = event.deltaY > 0 ? -0.1 : 0.1;
-      setStageZoom(Number((state.stageZoom + factor).toFixed(2)));
+      zoomAt(event.clientX, event.clientY, event.deltaY);
     },
     { passive: false }
   );

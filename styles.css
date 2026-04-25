@@ -91,11 +91,15 @@ main { position: relative; height: 100vh; }
 }
 
 .token-label {
-  font-size: 12px;
-  padding: 1px 6px;
+  --label-scale: 1;
+  font-size: 24px;
+  line-height: 1;
+  padding: 2px 10px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.65);
   white-space: nowrap;
+  transform: scale(var(--label-scale));
+  transform-origin: top center;
 }
 
 .draggable-panel {
