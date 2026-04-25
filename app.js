@@ -182,8 +182,18 @@ function createToken(token) {
 
   if (token.name) {
     label.textContent = token.name;
-    label.hidden = false;
     label.style.setProperty("--label-scale", String((1 / state.stageZoom).toFixed(4)));
+    if (state.labelMode === "hover") {
+      label.hidden = true;
+      node.addEventListener("mouseenter", () => {
+        label.hidden = false;
+      });
+      node.addEventListener("mouseleave", () => {
+        label.hidden = true;
+      });
+    } else {
+      label.hidden = false;
+    }
   } else {
     label.hidden = true;
   }
