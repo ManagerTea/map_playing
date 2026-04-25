@@ -24,7 +24,8 @@ const els = {
   zoomIn: document.getElementById("zoomIn"),
   zoomOut: document.getElementById("zoomOut"),
   stageZoomText: document.getElementById("stageZoomText"),
-  labelMode: document.getElementById("labelMode"),
+  modeAlways: document.getElementById("modeAlways"),
+  modeHover: document.getElementById("modeHover"),
   tokenLayer: document.getElementById("tokenLayer"),
   tokenList: document.getElementById("tokenList"),
   tokenForm: document.getElementById("tokenForm"),
@@ -105,6 +106,15 @@ async function uploadImageFile(file) {
   return result.imageUrl;
 }
 
+
+function getEffectiveLabelMode() {
+  return state.labelMode === "always" ? "hover" : "always";
+}
+
+function setEffectiveLabelMode(mode) {
+  state.labelMode = mode === "hover" ? "always" : "hover";
+}
+
 function applyMap() {
   if (!state.mapSrc) {
     els.mapImage.style.display = "none";
@@ -119,8 +129,10 @@ function applyMap() {
 
   els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
-  els.labelMode.value = state.labelMode;
-  els.body.classList.toggle("label-hover-mode", state.labelMode === "always");
+  const effectiveMode = getEffectiveLabelMode();
+  els.body.classList.toggle("label-hover-mode", effectiveMode === "hover");
+  els.modeAlways.classList.toggle("active", effectiveMode === "always");
+  els.modeHover.classList.toggle("active", effectiveMode === "hover");
 }
 
 function setMapScale(next) {
@@ -189,7 +201,7 @@ function createToken(token) {
   if (token.name) {
     label.textContent = token.name;
     label.style.setProperty("--label-scale", String((1 / state.stageZoom).toFixed(4)));
-    if (state.labelMode === "always") {
+    if (getEffectiveLabelMode() === "hover") {
       label.hidden = true;
       node.addEventListener("mouseenter", () => {
         label.hidden = false;
@@ -497,8 +509,14 @@ function attachEvents() {
   els.zoomIn.addEventListener("click", () => setMapScale(state.mapScale + 5));
   els.zoomOut.addEventListener("click", () => setMapScale(state.mapScale - 5));
 
-  els.labelMode.addEventListener("change", async () => {
-    state.labelMode = els.labelMode.value === "hover" ? "hover" : "always";
+  els.modeAlways.addEventListener("click", async () => {
+    setEffectiveLabelMode("always");
+    renderAll();
+    await saveStateToServer();
+  });
+
+  els.modeHover.addEventListener("click", async () => {
+    setEffectiveLabelMode("hover");
     renderAll();
     await saveStateToServer();
   });

@@ -39,12 +39,12 @@
             <strong>滚轮缩放界面：</strong>
             <span id="stageZoomText">100%</span>
           </div>
-          <div class="row mt6">
-            <label for="labelMode"><strong>名字显示：</strong></label>
-            <select id="labelMode">
-              <option value="always">常显示</option>
-              <option value="hover">悬停显示</option>
-            </select>
+          <div class="row mt6 mode-row">
+            <strong>名字显示：</strong>
+            <div class="mode-switch" id="labelModeSwitch">
+              <button id="modeAlways" type="button">常显示</button>
+              <button id="modeHover" type="button">悬停显示</button>
+            </div>
           </div>
           <p class="hint">地图与整体视图均可拖动，不会卡在屏幕外。</p>
         </div>
