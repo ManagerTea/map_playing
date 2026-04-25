@@ -131,8 +131,10 @@ function applyMap() {
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
   const effectiveMode = getEffectiveLabelMode();
   els.body.classList.toggle("label-hover-mode", effectiveMode === "hover");
-  els.modeAlways.classList.toggle("active", effectiveMode === "always");
-  els.modeHover.classList.toggle("active", effectiveMode === "hover");
+  if (els.modeAlways && els.modeHover) {
+    els.modeAlways.classList.toggle("active", effectiveMode === "always");
+    els.modeHover.classList.toggle("active", effectiveMode === "hover");
+  }
 }
 
 function setMapScale(next) {
@@ -509,17 +511,19 @@ function attachEvents() {
   els.zoomIn.addEventListener("click", () => setMapScale(state.mapScale + 5));
   els.zoomOut.addEventListener("click", () => setMapScale(state.mapScale - 5));
 
-  els.modeAlways.addEventListener("click", async () => {
-    setEffectiveLabelMode("always");
-    renderAll();
-    await saveStateToServer();
-  });
+  if (els.modeAlways && els.modeHover) {
+    els.modeAlways.addEventListener("click", async () => {
+      setEffectiveLabelMode("always");
+      renderAll();
+      await saveStateToServer();
+    });
 
-  els.modeHover.addEventListener("click", async () => {
-    setEffectiveLabelMode("hover");
-    renderAll();
-    await saveStateToServer();
-  });
+    els.modeHover.addEventListener("click", async () => {
+      setEffectiveLabelMode("hover");
+      renderAll();
+      await saveStateToServer();
+    });
+  }
 
   els.mapStage.addEventListener(
     "wheel",
@@ -530,8 +534,8 @@ function attachEvents() {
     { passive: false }
   );
 
-  els.tokenForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  const handleAddToken = async (event) => {
+    event?.preventDefault();
     els.addTokenBtn.disabled = true;
     els.addTokenBtn.textContent = "上传中...";
 
@@ -560,7 +564,10 @@ function attachEvents() {
       els.addTokenBtn.disabled = false;
       els.addTokenBtn.textContent = "新增 Token";
     }
-  });
+  };
+
+  els.tokenForm.addEventListener("submit", handleAddToken);
+  els.addTokenBtn.addEventListener("click", handleAddToken);
 
   bindMapDrag();
   makePanelDraggable(els.mapPanel);
