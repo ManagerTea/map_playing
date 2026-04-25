@@ -271,6 +271,8 @@ body.ui-hidden #introBar,
 body.ui-hidden #mapPanel,
 body.ui-hidden #tokenPanel { display: none; }
 
+body.ui-hidden .map-stage { inset: 0; }
+
 
 body.label-hover-mode .token-label {
   opacity: 0;

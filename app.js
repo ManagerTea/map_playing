@@ -151,6 +151,11 @@ async function uploadImageFile(file) {
   return result.imageUrl;
 }
 
+
+function uiInsetCompensationY() {
+  return els.body.classList.contains("ui-hidden") ? 72 : 0;
+}
+
 function applyMap() {
   if (!state.mapSrc) {
     els.mapImage.style.display = "none";
@@ -162,7 +167,8 @@ function applyMap() {
 
   els.mapWrapper.style.width = `${state.mapScale}%`;
   els.zoomInput.value = String(state.mapScale);
-  els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
+  const visualOffsetY = state.mapOffsetY + uiInsetCompensationY();
+  els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${visualOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
 
   const hoverMode = state.labelMode === "hover";
@@ -194,10 +200,10 @@ function zoomAt(clientX, clientY, deltaY) {
   if (nextScale === oldScale) return;
 
   const mapX = (pointerX - state.mapOffsetX) / oldScale;
-  const mapY = (pointerY - state.mapOffsetY) / oldScale;
+  const mapY = (pointerY - (state.mapOffsetY + uiInsetCompensationY())) / oldScale;
   state.stageZoom = nextScale;
   state.mapOffsetX = pointerX - mapX * nextScale;
-  state.mapOffsetY = pointerY - mapY * nextScale;
+  state.mapOffsetY = pointerY - mapY * nextScale - uiInsetCompensationY();
   renderAll();
   saveStateToServer();
 }
@@ -523,6 +529,7 @@ function attachEvents() {
     els.body.classList.toggle("ui-hidden");
     const hidden = els.body.classList.contains("ui-hidden");
     setButtonIcon(els.toggleUiBtn, hidden ? "eyeOff" : "eye", hidden ? "恢复UI" : "隐藏UI");
+    renderAll();
   });
 
   els.lockViewBtn.addEventListener("click", () => {
