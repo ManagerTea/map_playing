@@ -153,7 +153,8 @@ function applyMap() {
   els.tokenPanelBody.hidden = uiState.tokenPanelCollapsed;
   els.toggleMapPanel.textContent = uiState.mapPanelCollapsed ? "展开" : "收起";
   els.toggleTokenPanel.textContent = uiState.tokenPanelCollapsed ? "展开" : "收起";
-  els.lockViewBtn.textContent = uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置";
+  els.lockViewBtn.textContent = uiState.viewLocked ? "🔓" : "🔒";
+  els.lockViewBtn.title = uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置";
 }
 
 function setMapScale(next) {
@@ -499,7 +500,9 @@ function makePanelDraggable(panel) {
 function attachEvents() {
   els.toggleUiBtn.addEventListener("click", () => {
     els.body.classList.toggle("ui-hidden");
-    els.toggleUiBtn.textContent = els.body.classList.contains("ui-hidden") ? "恢复UI" : "一键隐藏UI";
+    const hidden = els.body.classList.contains("ui-hidden");
+    els.toggleUiBtn.textContent = hidden ? "🙈" : "👁️";
+    els.toggleUiBtn.title = hidden ? "恢复UI" : "隐藏UI";
   });
 
   els.lockViewBtn.addEventListener("click", () => {
