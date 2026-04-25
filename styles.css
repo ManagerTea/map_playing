@@ -69,7 +69,7 @@ main { position: relative; height: 100vh; }
   overflow: visible;
 }
 
-.token.locked { cursor: not-allowed; opacity: 0.72; }
+.token.locked { cursor: not-allowed; }
 
 .token-image {
   display: none;

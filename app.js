@@ -120,7 +120,7 @@ function applyMap() {
   els.zoomLayer.style.transform = `translate(${state.mapOffsetX}px, ${state.mapOffsetY}px) scale(${state.stageZoom})`;
   els.stageZoomText.textContent = `${Math.round(state.stageZoom * 100)}%`;
   els.labelMode.value = state.labelMode;
-  els.body.classList.toggle("label-hover-mode", state.labelMode === "hover");
+  els.body.classList.toggle("label-hover-mode", state.labelMode === "always");
 }
 
 function setMapScale(next) {
@@ -189,7 +189,7 @@ function createToken(token) {
   if (token.name) {
     label.textContent = token.name;
     label.style.setProperty("--label-scale", String((1 / state.stageZoom).toFixed(4)));
-    if (state.labelMode === "hover") {
+    if (state.labelMode === "always") {
       label.hidden = true;
       node.addEventListener("mouseenter", () => {
         label.hidden = false;
