@@ -52,6 +52,20 @@ const els = {
 const POLL_MS = 2000;
 let syncing = false;
 
+const ICONS = {
+  lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>',
+  unlock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 7.3-2.1"></path></svg>',
+  eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+  eyeOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a21.86 21.86 0 0 1 5.06-6.94"></path><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a22.82 22.82 0 0 1-3.16 4.19"></path><path d="M1 1l22 22"></path></svg>',
+};
+
+function setButtonIcon(button, iconKey, label) {
+  button.innerHTML = ICONS[iconKey];
+  button.title = label;
+  button.setAttribute("aria-label", label);
+}
+
+
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
@@ -160,8 +174,7 @@ function applyMap() {
   els.tokenPanelBody.hidden = uiState.tokenPanelCollapsed;
   els.toggleMapPanel.textContent = uiState.mapPanelCollapsed ? "展开" : "收起";
   els.toggleTokenPanel.textContent = uiState.tokenPanelCollapsed ? "展开" : "收起";
-  els.lockViewBtn.textContent = uiState.viewLocked ? "🔒" : "🔓";
-  els.lockViewBtn.title = uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置";
+  setButtonIcon(els.lockViewBtn, uiState.viewLocked ? "lock" : "unlock", uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置");
 }
 
 function setMapScale(next) {
@@ -505,11 +518,11 @@ function makePanelDraggable(panel) {
 }
 
 function attachEvents() {
+  setButtonIcon(els.toggleUiBtn, "eye", "隐藏UI");
   els.toggleUiBtn.addEventListener("click", () => {
     els.body.classList.toggle("ui-hidden");
     const hidden = els.body.classList.contains("ui-hidden");
-    els.toggleUiBtn.textContent = hidden ? "🙈" : "👁️";
-    els.toggleUiBtn.title = hidden ? "恢复UI" : "隐藏UI";
+    setButtonIcon(els.toggleUiBtn, hidden ? "eyeOff" : "eye", hidden ? "恢复UI" : "隐藏UI");
   });
 
   els.lockViewBtn.addEventListener("click", () => {
