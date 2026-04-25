@@ -160,7 +160,7 @@ function applyMap() {
   els.tokenPanelBody.hidden = uiState.tokenPanelCollapsed;
   els.toggleMapPanel.textContent = uiState.mapPanelCollapsed ? "展开" : "收起";
   els.toggleTokenPanel.textContent = uiState.tokenPanelCollapsed ? "展开" : "收起";
-  els.lockViewBtn.textContent = uiState.viewLocked ? "🔓" : "🔒";
+  els.lockViewBtn.textContent = uiState.viewLocked ? "🔒" : "🔓";
   els.lockViewBtn.title = uiState.viewLocked ? "解除锁定地图与位置" : "锁定地图与位置";
 }
 
