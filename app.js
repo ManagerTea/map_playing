@@ -56,6 +56,13 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
+function createId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `token-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function toast(message) {
   alert(message);
 }
@@ -256,7 +263,7 @@ function enableDrag(node, tokenId) {
 
   node.addEventListener("pointerdown", (event) => {
     const token = state.tokens.find((item) => item.id === tokenId);
-    if (!token || token.locked || uiState.viewLocked) return;
+    if (!token || token.locked) return;
     event.preventDefault();
     event.stopPropagation();
     dragging = true;
@@ -475,7 +482,7 @@ function makePanelDraggable(panel) {
   let offsetY = 0;
 
   handle.addEventListener("pointerdown", (event) => {
-    if (uiState.viewLocked || event.target.closest(".header-btn")) return;
+    if (event.target.closest(".header-btn")) return;
     dragging = true;
     const rect = panel.getBoundingClientRect();
     offsetX = event.clientX - rect.left;
@@ -568,7 +575,7 @@ function attachEvents() {
       const imageFile = (els.tokenImage.files || [])[0];
       const imageUrl = imageFile ? await uploadImageFile(imageFile) : "";
       const token = {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: els.tokenName.value.trim(),
         color: els.tokenColor.value,
         imageUrl,
