@@ -64,13 +64,19 @@ main { position: relative; height: 100vh; }
   position: absolute;
   transform: translate(-50%, -50%);
   cursor: grab;
-  display: inline-block;
+  width: 0;
+  height: 0;
+  overflow: visible;
 }
 
 .token.locked { cursor: not-allowed; opacity: 0.72; }
 
 .token-image {
   display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
   width: 100px;
   height: 100px;
   object-fit: cover;
@@ -80,6 +86,10 @@ main { position: relative; height: 100vh; }
 }
 
 .token-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -90,8 +100,8 @@ main { position: relative; height: 100vh; }
 .token-label {
   --label-scale: 1;
   position: absolute;
-  left: 50%;
-  top: calc(100% + 6px);
+  left: 0;
+  top: 12px;
   font-size: 24px;
   line-height: 1;
   padding: 2px 10px;

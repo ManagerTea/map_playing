@@ -167,17 +167,23 @@ function createToken(token) {
   node.style.top = `${token.y}%`;
 
   if (token.imageUrl) {
+    const w = token.width || 100;
+    const h = token.height || 100;
     image.src = token.imageUrl;
     image.style.display = "block";
-    image.style.width = `${token.width || 100}px`;
-    image.style.height = `${token.height || 100}px`;
+    image.style.width = `${w}px`;
+    image.style.height = `${h}px`;
     dot.style.display = "none";
+    label.style.top = `${h / 2 + 6}px`;
   } else {
+    const w = token.width || 24;
+    const h = token.height || 24;
     image.style.display = "none";
     dot.style.display = "block";
     dot.style.background = token.color || "#e63946";
-    dot.style.width = `${token.width || 24}px`;
-    dot.style.height = `${token.height || 24}px`;
+    dot.style.width = `${w}px`;
+    dot.style.height = `${h}px`;
+    label.style.top = `${h / 2 + 6}px`;
   }
 
   if (token.name) {
