@@ -74,6 +74,10 @@ node server.js
 - `uploads/`：上传的地图/Token 图片（运行后自动生成）
 
 
+## Windows / 代理访问时的 `ERR_INVALID_URL` 说明
+
+旧版本服务端会使用请求头里的 `Host` 拼接 URL；如果某些代理、探活工具或异常客户端发来了缺失 `Host` 的请求，Node.js 可能抛出 `TypeError: Invalid URL` 并结束进程。当前版本已改为使用固定本地基准地址解析请求路径，缺失 `Host` 时不会再导致进程崩溃。
+
 ## npm notice 说明
 
 如果使用 `npm start` 看到类似 `npm notice New minor version of npm available`，这只是 npm 自身的升级提醒，不是本程序报错。项目已加入 `.npmrc` 关闭 npm 更新提示；如果仍担心 npm 包装进程影响长期运行，建议直接使用：

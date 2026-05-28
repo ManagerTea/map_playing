@@ -136,8 +136,19 @@ function saveDataUrlImage(dataUrl, filename = 'image') {
   return `/uploads/${output}`;
 }
 
+function parseRequestUrl(req) {
+  try {
+    return new URL(req.url || '/', `http://localhost:${PORT}`);
+  } catch {
+    return null;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  const url = parseRequestUrl(req);
+  if (!url) {
+    return sendJson(res, 400, { error: 'Invalid request URL' });
+  }
 
   if (req.method === 'GET' && url.pathname === '/api/state') {
     return sendJson(res, 200, loadState());
