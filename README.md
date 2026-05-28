@@ -41,10 +41,10 @@ docker compose up -d --build
 ### 3) 启动
 
 ```bash
-npm start
+node server.js
 ```
 
-默认监听 `4444` 端口，局域网或公网其他电脑可通过服务器 IP 访问。
+也可以使用 `npm start`，但长期运行时推荐直接执行 `node server.js`，避免 npm 包装进程输出版本升级 notice 干扰日志判断。默认监听 `4444` 端口，局域网或公网其他电脑可通过服务器 IP 访问。
 
 
 ## 常见问题：为什么不能访问 `http://0.0.0.0:4444`？
@@ -73,6 +73,16 @@ npm start
 - `data/state.json`：共享地图与 Token 状态（运行后自动生成）
 - `uploads/`：上传的地图/Token 图片（运行后自动生成）
 
+
+## npm notice 说明
+
+如果使用 `npm start` 看到类似 `npm notice New minor version of npm available`，这只是 npm 自身的升级提醒，不是本程序报错。项目已加入 `.npmrc` 关闭 npm 更新提示；如果仍担心 npm 包装进程影响长期运行，建议直接使用：
+
+```bash
+node server.js
+```
+
+Docker 镜像也已改为直接执行 `node server.js`。
 
 ## 公网无法访问排查（端口已放行但仍失败）
 

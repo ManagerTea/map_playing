@@ -11,7 +11,7 @@ rm -f "$TARGET"
 
 cd "$ROOT_DIR"
 zip -r "$TARGET" \
-  index.html styles.css app.js server.js package.json README.md \
+  index.html styles.css app.js server.js package.json .npmrc README.md \
   Dockerfile docker-compose.yml >/dev/null
 
 echo "Created: $TARGET"
