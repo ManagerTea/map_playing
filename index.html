@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>跑团地图助手（多人共享版）</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar" id="introBar">
+      <h1>跑团地图助手（服务器共享）</h1>
+      <p>同一服务器上的所有访问者共享同一份地图与 Token 状态</p>
+    </header>
+
+    <main>
+      <section class="map-stage" id="mapStage" aria-label="地图区域">
+        <div class="zoom-layer" id="zoomLayer">
+          <div class="map-wrapper" id="mapWrapper">
+            <img id="mapImage" alt="地图背景" />
+            <div id="tokenLayer" class="token-layer" aria-label="Token 图层"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="mapPanel" class="draggable-panel" aria-label="地图控制">
+        <div class="panel-header drag-handle">
+          <span>地图栏（可拖动）</span>
+          <button id="toggleMapPanel" type="button" class="header-btn">收起</button>
+        </div>
+        <div class="panel-body" id="mapPanelBody">
+          <label class="file-upload">
+            上传背景地图（共享）
+            <input id="mapUpload" type="file" accept="image/*" />
+          </label>
+          <div class="row">
+            <button id="zoomOut" type="button">-</button>
+            <input id="zoomInput" type="number" min="20" max="300" step="5" value="100" />
+            <span>%</span>
+            <button id="zoomIn" type="button">+</button>
+          </div>
+          <div class="row mt6">
+            <strong>滚轮缩放界面：</strong>
+            <span id="stageZoomText">100%</span>
+          </div>
+          <div class="row mt6 mode-row">
+            <strong>名字显示：</strong>
+            <div class="mode-switch" id="labelModeSwitch">
+              <button id="modeAlways" type="button">常显示</button>
+              <button id="modeHover" type="button">悬停显示</button>
+            </div>
+          </div>
+          <p class="hint">地图与整体视图均可拖动，不会卡在屏幕外。</p>
+        </div>
+      </section>
+
+      <section id="tokenPanel" class="draggable-panel" aria-label="Token 控制">
+        <div class="panel-header drag-handle">
+          <span>Token栏（可拖动）</span>
+          <button id="toggleTokenPanel" type="button" class="header-btn">收起</button>
+        </div>
+        <div class="panel-body" id="tokenPanelBody">
+          <form id="tokenForm" class="token-form">
+            <label>
+              名字（可空）
+              <input id="tokenName" type="text" maxlength="20" placeholder="例如：骑士A" />
+            </label>
+            <label>
+              颜色（无图片时生效）
+              <input id="tokenColor" type="color" value="#e63946" />
+            </label>
+            <label>
+              Token 图片（可空，默认 100x100）
+              <input id="tokenImage" type="file" accept="image/*" />
+            </label>
+            <button id="addTokenBtn" type="button">新增 Token</button>
+          </form>
+
+          <div class="token-toolbar">
+            <button id="deleteSelectedBtn" type="button">删除已选</button>
+            <span id="selectedCount">已选 0 个</span>
+          </div>
+          <ul id="tokenList" class="token-list"></ul>
+        </div>
+      </section>
+
+      <div class="floating-actions">
+        <button id="lockViewBtn" class="toggle-ui-btn icon-btn" type="button" title="锁定地图与位置" aria-label="锁定地图与位置"></button>
+        <button id="toggleUiBtn" class="toggle-ui-btn icon-btn" type="button" title="隐藏/恢复UI" aria-label="隐藏/恢复UI"></button>
+      </div>
+    </main>
+
+    <template id="tokenTemplate">
+      <div class="token" role="button" tabindex="0">
+        <img class="token-image" alt="token" />
+        <span class="token-dot"></span>
+        <span class="token-label"></span>
+      </div>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

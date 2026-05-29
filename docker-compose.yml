@@ -1,0 +1,9 @@
+services:
+  map-helper:
+    build: .
+    ports:
+      - "4444:4444"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    restart: unless-stopped
